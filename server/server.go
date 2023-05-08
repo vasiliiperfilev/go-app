@@ -8,10 +8,15 @@ import (
 
 func PlayerServer(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
+	fmt.Fprint(w, GetPlayerScore(player))
+}
+
+func GetPlayerScore(player string) string {
 	if player == "test" {
-		fmt.Fprint(w, "20")
+		return "20"
 	}
 	if player == "anothertest" {
-		fmt.Fprint(w, "30")
+		return "30"
 	}
+	return ""
 }
