@@ -9,11 +9,27 @@ import (
 	server "github.com/vasiliiperfilev/go-app/server"
 )
 
+type StubPlayerStore struct {
+	scores map[string]int
+}
+
+func (s *StubPlayerStore) GetPlayerScore(name string) int {
+	score := s.scores[name]
+	return score
+}
+
 func TestServer(t *testing.T) {
+	playerStoreStub := StubPlayerStore{
+		scores: map[string]int{
+			"test":        20,
+			"anothertest": 30,
+		},
+	}
+	playerServer := &server.PlayerServer{Store: &playerStoreStub}
 	t.Run("GET test player score", func(t *testing.T) {
 		request := newGetScoreRequest("test")
 		response := httptest.NewRecorder()
-		server.PlayerServer(response, request)
+		playerServer.ServeHTTP(response, request)
 
 		got := response.Body.String()
 		want := "20"
@@ -24,7 +40,7 @@ func TestServer(t *testing.T) {
 	t.Run("GET anothertest player score", func(t *testing.T) {
 		request := newGetScoreRequest("anothertest")
 		response := httptest.NewRecorder()
-		server.PlayerServer(response, request)
+		playerServer.ServeHTTP(response, request)
 
 		got := response.Body.String()
 		want := "30"
