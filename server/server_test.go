@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	server "github.com/vasiliiperfilev/go-app/server"
@@ -18,7 +19,7 @@ func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	return score
 }
 
-func TestServer(t *testing.T) {
+func TestGetScore(t *testing.T) {
 	playerStoreStub := StubPlayerStore{
 		scores: map[string]int{
 			"test":        20,
@@ -31,10 +32,14 @@ func TestServer(t *testing.T) {
 		response := httptest.NewRecorder()
 		playerServer.ServeHTTP(response, request)
 
-		got := response.Body.String()
-		want := "20"
+		gotBody := response.Body.String()
+		wantBody := "20"
 
-		assertBody(t, got, want)
+		gotStatus := response.Code
+		wantStatus := http.StatusOK
+
+		assertValue(t, gotBody, wantBody)
+		assertValue(t, gotStatus, wantStatus)
 	})
 
 	t.Run("GET anothertest player score", func(t *testing.T) {
@@ -42,12 +47,26 @@ func TestServer(t *testing.T) {
 		response := httptest.NewRecorder()
 		playerServer.ServeHTTP(response, request)
 
-		got := response.Body.String()
-		want := "30"
+		gotBody := response.Body.String()
+		wantBody := "30"
 
-		assertBody(t, got, want)
+		gotStatus := response.Code
+		wantStatus := http.StatusOK
+
+		assertValue(t, gotBody, wantBody)
+		assertValue(t, gotStatus, wantStatus)
 	})
 
+	t.Run("GET missing player score", func(t *testing.T) {
+		request := newGetScoreRequest("missing")
+		response := httptest.NewRecorder()
+		playerServer.ServeHTTP(response, request)
+
+		gotStatus := response.Code
+		wantStatus := http.StatusNotFound
+
+		assertValue(t, gotStatus, wantStatus)
+	})
 }
 
 func newGetScoreRequest(player string) *http.Request {
@@ -55,9 +74,14 @@ func newGetScoreRequest(player string) *http.Request {
 	return req
 }
 
-func assertBody(t *testing.T, got, want string) {
+func newPostWinRequest(player string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", player), nil)
+	return req
+}
+
+func assertValue[T any](t *testing.T, got, want T) {
 	t.Helper()
-	if got != want {
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
