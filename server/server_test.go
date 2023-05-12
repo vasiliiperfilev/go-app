@@ -11,12 +11,17 @@ import (
 )
 
 type StubPlayerStore struct {
-	scores map[string]int
+	scores   map[string]int
+	winCalls []string
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	score := s.scores[name]
 	return score
+}
+
+func (s *StubPlayerStore) RecordWin(name string) {
+	s.winCalls = append(s.winCalls, name)
 }
 
 func TestGetScore(t *testing.T) {
@@ -64,6 +69,33 @@ func TestGetScore(t *testing.T) {
 
 		gotStatus := response.Code
 		wantStatus := http.StatusNotFound
+
+		assertValue(t, gotStatus, wantStatus)
+	})
+}
+
+func TestStoreWin(t *testing.T) {
+	store := StubPlayerStore{
+		scores: map[string]int{},
+	}
+	playerServer := &server.PlayerServer{Store: &store}
+
+	t.Run("it records wins on POST", func(t *testing.T) {
+		player := "Peper"
+		request := newPostWinRequest(player)
+		response := httptest.NewRecorder()
+		playerServer.ServeHTTP(response, request)
+
+		gotStatus := response.Code
+		wantStatus := http.StatusAccepted
+
+		if len(store.winCalls) != 1 {
+			t.Errorf("got %d calls to RecordWin want %d", len(store.winCalls), 1)
+		}
+
+		if store.winCalls[0] != player {
+			t.Errorf("did not store correct winner got %q want %q", store.winCalls[0], player)
+		}
 
 		assertValue(t, gotStatus, wantStatus)
 	})
