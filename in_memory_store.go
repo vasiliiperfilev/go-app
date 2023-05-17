@@ -1,4 +1,4 @@
-package store
+package main
 
 import "sync"
 
@@ -15,6 +15,14 @@ func (i *InMemoryPlayerStore) RecordWin(name string) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.wins[name] += 1
+}
+
+func (i *InMemoryPlayerStore) GetLeague() []Player {
+	var league []Player
+	for name, wins := range i.wins {
+		league = append(league, Player{name, wins})
+	}
+	return league
 }
 
 func NewInMemoryPlayerStore() *InMemoryPlayerStore {
