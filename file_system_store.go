@@ -37,11 +37,14 @@ func (f *FileSystemStore) RecordWin(name string) {
 	f.database.Encode(f.league)
 }
 
-func NewFileSystemStore(db *os.File) *FileSystemStore {
+func NewFileSystemStore(db *os.File) (*FileSystemStore, error) {
 	db.Seek(0, 0)
-	league, _ := NewLeague(db)
+	league, err := NewLeague(db)
+	if err != nil {
+		return nil, err
+	}
 	return &FileSystemStore{
 		database: json.NewEncoder(&tape{db}),
 		league:   league,
-	}
+	}, nil
 }

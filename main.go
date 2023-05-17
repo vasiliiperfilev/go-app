@@ -15,7 +15,10 @@ func main() {
 		log.Fatalf("problem opening %s %v", dbFileName, err)
 	}
 
-	store := NewFileSystemStore(db)
+	store, err := NewFileSystemStore(db)
+	if err != nil {
+		log.Fatal("Can't establish db")
+	}
 	server := &PlayerServer{Store: store}
 	log.Fatal(http.ListenAndServe(":5000", server))
 }
